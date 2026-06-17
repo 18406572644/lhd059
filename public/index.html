@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>匿名漂流瓶</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Serif+4:wght@400;600&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ocean">
+    <div class="sky"></div>
+    
+    <svg class="waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path class="wave wave1" fill="#1a6fb5" fill-opacity="0.3" d="M0,192L48,181.3C96,171,192,149,288,160C384,171,480,213,576,218.7C672,224,768,192,864,170.7C960,149,1056,139,1152,144C1248,149,1344,171,1392,181.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+        <animateTransform attributeName="transform" type="translate" values="0,0;-100,0;0,0" dur="8s" repeatCount="indefinite"/>
+      </path>
+      <path class="wave wave2" fill="#1a6fb5" fill-opacity="0.5" d="M0,256L48,250.7C96,245,192,235,288,213.3C384,192,480,160,576,165.3C672,171,768,213,864,229.3C960,245,1056,235,1152,218.7C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+        <animateTransform attributeName="transform" type="translate" values="0,0;80,0;0,0" dur="10s" repeatCount="indefinite"/>
+      </path>
+      <path class="wave wave3" fill="#0c1445" fill-opacity="0.8" d="M0,288L48,282.7C96,277,192,267,288,261.3C384,256,480,256,576,261.3C672,267,768,277,864,277.3C960,277,1056,267,1152,261.3C1248,256,1344,256,1392,256L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+        <animateTransform attributeName="transform" type="translate" values="0,0;-60,0;0,0" dur="12s" repeatCount="indefinite"/>
+      </path>
+    </svg>
+    
+    <div class="deep-sea"></div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-number" id="floatingCount">0</span>
+      <span class="stat-label">海面漂浮</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number" id="todayThrown">0</span>
+      <span class="stat-label">今日扔出</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number" id="todayFished">0</span>
+      <span class="stat-label">今日捞取</span>
+    </div>
+  </div>
+
+  <h1 class="title">匿名漂流瓶</h1>
+
+  <div class="bottles-container" id="bottlesContainer"></div>
+
+  <div class="controls">
+    <button class="btn btn-throw" id="throwBtn">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2v20M2 12h20"/>
+      </svg>
+      扔瓶子
+    </button>
+    <button class="btn btn-fish" id="fishBtn">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14M5 12l3-3M5 12l3 3"/>
+      </svg>
+      捞瓶子
+    </button>
+  </div>
+
+  <div class="beach"></div>
+
+  <div class="modal" id="throwModal">
+    <div class="modal-content glass-effect">
+      <h2 class="modal-title">扔一个漂流瓶</h2>
+      <textarea class="bottle-input" id="throwContent" placeholder="写下你的心里话，让它漂向远方..." maxlength="140"></textarea>
+      <div class="char-count"><span id="throwCharCount">0</span>/140</div>
+      
+      <div class="color-picker">
+        <span class="color-label">选择瓶子颜色：</span>
+        <div class="color-options">
+          <label class="color-option">
+            <input type="radio" name="bottleColor" value="blue" checked>
+            <span class="color-dot color-blue"></span>
+          </label>
+          <label class="color-option">
+            <input type="radio" name="bottleColor" value="green">
+            <span class="color-dot color-green"></span>
+          </label>
+          <label class="color-option">
+            <input type="radio" name="bottleColor" value="yellow">
+            <span class="color-dot color-yellow"></span>
+          </label>
+          <label class="color-option">
+            <input type="radio" name="bottleColor" value="pink">
+            <span class="color-dot color-pink"></span>
+          </label>
+          <label class="color-option">
+            <input type="radio" name="bottleColor" value="purple">
+            <span class="color-dot color-purple"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-cancel" id="throwCancel">取消</button>
+        <button class="btn btn-confirm" id="throwConfirm">扔出去！</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="fishModal">
+    <div class="modal-content glass-effect bottle-detail">
+      <div class="fishing-hook" id="fishingHook">
+        <svg viewBox="0 0 50 100" fill="none" stroke="#8B4513" stroke-width="2">
+          <line x1="25" y1="0" x2="25" y2="70"/>
+          <path d="M25 70 Q25 90 15 90 Q5 90 5 80 Q5 75 10 75"/>
+        </svg>
+      </div>
+      <div class="bottle-detail-content" id="bottleDetail">
+        <h2 class="modal-title">捞到一个漂流瓶</h2>
+        <div class="bottle-content" id="bottleContentText"></div>
+        <div class="replies-section">
+          <h3 class="replies-title">回信</h3>
+          <div class="replies-list" id="repliesList"></div>
+          <div class="reply-input-section">
+            <textarea class="reply-input" id="replyContent" placeholder="写一句回信..." maxlength="50"></textarea>
+            <div class="char-count"><span id="replyCharCount">0</span>/50</div>
+            <button class="btn btn-reply" id="replyBtn">发送回信</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" id="fishClose">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-content glass-effect bottle-detail book-flip">
+      <div class="bottle-detail-content">
+        <h2 class="modal-title">漂流瓶详情</h2>
+        <div class="bottle-content" id="detailContentText"></div>
+        <div class="replies-section">
+          <h3 class="replies-title">所有回信</h3>
+          <div class="replies-list" id="detailRepliesList"></div>
+        </div>
+        <div class="bottle-meta">
+          <span>已被捞取 <span id="detailFishedCount">0</span> 次</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" id="detailClose">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="flying-bottle" id="flyingBottle"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
