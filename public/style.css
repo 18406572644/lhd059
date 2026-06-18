@@ -780,3 +780,141 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
+
+.drift-map-wrapper {
+  margin: 0 0 15px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.drift-map-container {
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  animation: mapReveal 0.6s ease-out;
+}
+
+@keyframes mapReveal {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.drift-map-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+  font-weight: 600;
+}
+
+.drift-map-svg {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+              inset 0 0 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.drift-map-placeholder {
+  width: 100%;
+  max-width: 420px;
+}
+
+.drift-map-placeholder svg {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+.track-dash-path {
+  animation: dashFlow 2s linear infinite;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+.track-point {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+  animation: pointPop 0.4s ease-out backwards;
+}
+
+@keyframes pointPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.track-pulse {
+  transform-origin: center;
+  animation: pulseRing 2s ease-out infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    r: 7;
+    opacity: 0.5;
+  }
+  100% {
+    r: 20;
+    opacity: 0;
+  }
+}
+
+@keyframes labelFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bottleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.track-bottle-icon {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+@media (max-width: 520px) {
+  .drift-map-container {
+    max-width: 100%;
+  }
+  
+  .drift-map-svg {
+    max-height: 220px;
+  }
+}
