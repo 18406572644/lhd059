@@ -702,14 +702,28 @@ function createDriftMapSVG(tracks, bottleColor) {
     `;
   }
 
+  const validTracks = tracks.filter(t => t.coords && t.city);
+  if (validTracks.length === 0) {
+    return `
+      <div class="drift-map-placeholder">
+        <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="280" fill="rgba(10,20,60,0.4)" rx="10"/>
+          <text x="200" y="140" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="14">暂无漂流轨迹</text>
+          <text x="200" y="165" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="11">（此瓶子还未产生可定位的漂流记录）</text>
+        </svg>
+      </div>
+    `;
+  }
+
   const width = 400;
   const height = 280;
   const color = bottleColors[bottleColor] || bottleColors.blue;
+
+  const lastTrackIdx = tracks.map(t => t.coords && t.city ? true : null).lastIndexOf(true);
+
   const uniqueCities = new Map();
-  tracks.forEach(t => {
-    if (t.coords) {
-      uniqueCities.set(t.city, t.coords);
-    }
+  validTracks.forEach(t => {
+    uniqueCities.set(t.city, t.coords);
   });
 
   const cityXY = new Map();
@@ -738,23 +752,21 @@ function createDriftMapSVG(tracks, bottleColor) {
   let pathElements = '';
   let pointElements = '';
   let labelElements = '';
-  const processedCities = new Set();
+  const processedCities = new Map();
   const labelPositions = [];
 
-  for (let i = 0; i < tracks.length - 1; i++) {
-    const from = tracks[i];
-    const to = tracks[i + 1];
-    if (from.coords && to.coords) {
-      const p1 = cityXY.get(from.city);
-      const p2 = cityXY.get(to.city);
-      if (p1 && p2) {
-        const pathD = generateCurvedPath(p1.x, p1.y, p2.x, p2.y);
-        pathElements += `
-          <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.25" stroke-linecap="round"/>
-          <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.85" stroke-linecap="round"
-            stroke-dasharray="6 4" class="track-dash-path" style="animation-delay: ${i * 0.3}s"/>
-        `;
-      }
+  for (let i = 0; i < validTracks.length - 1; i++) {
+    const from = validTracks[i];
+    const to = validTracks[i + 1];
+    const p1 = cityXY.get(from.city);
+    const p2 = cityXY.get(to.city);
+    if (p1 && p2) {
+      const pathD = generateCurvedPath(p1.x, p1.y, p2.x, p2.y);
+      pathElements += `
+        <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.25" stroke-linecap="round"/>
+        <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.85" stroke-linecap="round"
+          stroke-dasharray="6 4" class="track-dash-path" style="animation-delay: ${i * 0.3}s"/>
+      `;
     }
   }
 
@@ -768,17 +780,58 @@ function createDriftMapSVG(tracks, bottleColor) {
     return false;
   }
 
-  tracks.forEach((t, idx) => {
-    if (!t.coords || processedCities.has(t.city)) return;
-    processedCities.add(t.city);
-    const p = cityXY.get(t.city);
+  function findTrackIndex(tracksArray, target) {
+    for (let i = 0; i < tracksArray.length; i++) {
+      if (tracksArray[i].city === target.city &&
+          tracksArray[i].type === target.type &&
+          tracksArray[i].time === target.time) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  validTracks.forEach((t) => {
+    const cityKey = t.city;
+    if (!processedCities.has(cityKey)) {
+      processedCities.set(cityKey, []);
+    }
+    processedCities.get(cityKey).push({ track: t, globalIdx: findTrackIndex(tracks, t) });
+  });
+
+  validTracks.forEach((t, idx) => {
+    const cityKey = t.city;
+    if (processedCities.get(cityKey).rendered) return;
+    processedCities.get(cityKey).rendered = true;
+
+    const cityRecords = processedCities.get(cityKey);
+    const globalIdx = Math.max(...cityRecords.map(r => r.globalIdx));
+    const isThrow = cityRecords.some(r => r.track.type === 'throw');
+    const isLast = globalIdx === lastTrackIdx;
+    const hasFished = cityRecords.some(r => r.track.type === 'fished');
+
+    const p = cityXY.get(cityKey);
     if (!p) return;
 
-    const isThrow = t.type === 'throw';
-    const isLast = idx === tracks.length - 1;
-    const r = isThrow ? 8 : (isLast ? 7 : 5);
-    const fillColor = isThrow ? '#f59e0b' : (isLast ? color : '#ffffff');
-    const strokeColor = isThrow ? '#d97706' : color;
+    let displayType = 'fished';
+    if (isThrow && !hasFished) displayType = 'throw';
+    else if (isThrow && isLast) displayType = 'both';
+    else if (isThrow) displayType = 'throw';
+    else if (isLast) displayType = 'current';
+
+    const r = isLast ? 7 : (isThrow ? 8 : 5);
+    let fillColor, strokeColor;
+
+    if (displayType === 'throw' || displayType === 'both') {
+      fillColor = '#f59e0b';
+      strokeColor = '#d97706';
+    } else if (displayType === 'current') {
+      fillColor = color;
+      strokeColor = color;
+    } else {
+      fillColor = '#ffffff';
+      strokeColor = color;
+    }
 
     pointElements += `
       <circle cx="${p.x}" cy="${p.y}" r="${r + 6}" fill="${color}" fill-opacity="0.15" class="track-pulse" style="animation-delay: ${idx * 0.2}s"/>
@@ -817,6 +870,8 @@ function createDriftMapSVG(tracks, bottleColor) {
       { x: p.x - r - 6 - labelW, y: p.y + r + 4 + labelH },
       { x: p.x + r + 6, y: p.y - labelH / 2 },
       { x: p.x - r - 6 - labelW, y: p.y - labelH / 2 },
+      { x: p.x - labelW / 2, y: p.y - r - 10 },
+      { x: p.x - labelW / 2, y: p.y + r + 10 + labelH },
     ];
     
     let chosen = null;
