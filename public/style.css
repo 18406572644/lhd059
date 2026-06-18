@@ -393,6 +393,16 @@ body {
   box-shadow: 0 4px 15px rgba(245, 230, 200, 0.5);
 }
 
+.btn-throw-back {
+  background: linear-gradient(135deg, #1a6fb5, #0c1445);
+  color: white;
+}
+
+.btn-throw-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(26, 111, 181, 0.5);
+}
+
 .modal {
   position: fixed;
   top: 0;
@@ -577,11 +587,12 @@ body {
 .bottle-detail-content {
   opacity: 0;
   transform: scale(0.9);
+  visibility: hidden;
 }
 
 .bottle-detail-content.show {
+  visibility: visible;
   animation: bottle-reveal 0.5s ease forwards;
-  animation-delay: 1.5s;
 }
 
 @keyframes bottle-reveal {

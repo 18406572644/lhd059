@@ -335,6 +335,32 @@ function playThrowAnimation(color) {
   }, 1500);
 }
 
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function waitForAnimationEnd(element, durationMs) {
+  return new Promise(resolve => {
+    let resolved = false;
+    
+    const done = () => {
+      if (!resolved) {
+        resolved = true;
+        element.removeEventListener('animationend', onAnimationEnd);
+        resolve();
+      }
+    };
+    
+    const onAnimationEnd = () => {
+      done();
+    };
+    
+    element.addEventListener('animationend', onAnimationEnd);
+    
+    setTimeout(done, durationMs + 200);
+  });
+}
+
 async function fishBottle() {
   const fishModal = document.getElementById('fishModal');
   const fishingHook = document.getElementById('fishingHook');
@@ -348,55 +374,80 @@ async function fishBottle() {
   
   fishingHook.classList.add('animate');
   
+  const animationPromise = waitForAnimationEnd(fishingHook, 2000);
+  
   try {
-    const res = await fetch(`${API_BASE}/fish`);
-    const bottle = await res.json();
+    const apiPromise = fetch(`${API_BASE}/fish`).then(res => res.json());
+    
+    const [, bottle] = await Promise.all([animationPromise, apiPromise]);
     
     currentBottle = bottle;
     
-    setTimeout(() => {
-      if (!bottle) {
-        document.getElementById('bottleContentText').textContent = '很遗憾，今天没有捞到瓶子...';
-        document.getElementById('bottleAuthor').innerHTML = '';
-        document.getElementById('repliesList').innerHTML = '';
-        document.querySelector('.reply-input-section').style.display = 'none';
-      } else {
-        document.getElementById('bottleContentText').textContent = bottle.content;
-        document.getElementById('bottleAuthor').innerHTML = createAuthorHTML(bottle.author_nickname, bottle.author_avatar);
-        document.querySelector('.reply-input-section').style.display = 'block';
-        document.getElementById('replyContent').value = '';
-        document.getElementById('replyCharCount').textContent = '0';
-        
-        if (bottle.replies && bottle.replies.length > 0) {
-          document.getElementById('repliesList').innerHTML = bottle.replies.map(r => `
-            <div class="reply-item">
-              ${createAuthorHTML(r.author_nickname, r.author_avatar)}
-              <div class="reply-content">${escapeHtml(r.content)}</div>
-              <div class="reply-time">${formatTime(r.created_at)}</div>
-            </div>
-          `).join('');
-        } else {
-          document.getElementById('repliesList').innerHTML = '<div class="no-bottles">还没有回信</div>';
-        }
-      }
+    if (!bottle) {
+      document.getElementById('bottleContentText').textContent = '很遗憾，今天没有捞到瓶子...';
+      document.getElementById('bottleAuthor').innerHTML = '';
+      document.getElementById('repliesList').innerHTML = '';
+      document.querySelector('.reply-input-section').style.display = 'none';
+    } else {
+      document.getElementById('bottleContentText').textContent = bottle.content;
+      document.getElementById('bottleAuthor').innerHTML = createAuthorHTML(bottle.author_nickname, bottle.author_avatar);
+      document.querySelector('.reply-input-section').style.display = 'block';
+      document.getElementById('replyContent').value = '';
+      document.getElementById('replyCharCount').textContent = '0';
       
-      bottleDetail.classList.add('show');
-      loadStats();
-      loadBottles();
-    }, 1800);
+      if (bottle.replies && bottle.replies.length > 0) {
+        document.getElementById('repliesList').innerHTML = bottle.replies.map(r => `
+          <div class="reply-item">
+            ${createAuthorHTML(r.author_nickname, r.author_avatar)}
+            <div class="reply-content">${escapeHtml(r.content)}</div>
+            <div class="reply-time">${formatTime(r.created_at)}</div>
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('repliesList').innerHTML = '<div class="no-bottles">还没有回信</div>';
+      }
+    }
+    
+    bottleDetail.classList.add('show');
+    loadStats();
+    loadBottles();
     
   } catch (err) {
     console.error('捞瓶子失败:', err);
-    setTimeout(() => {
-      document.getElementById('bottleContentText').textContent = '捞瓶子失败，请稍后再试';
-      bottleDetail.classList.add('show');
-    }, 1000);
+    
+    await animationPromise;
+    
+    document.getElementById('bottleContentText').textContent = '捞瓶子失败，请稍后再试';
+    document.getElementById('bottleAuthor').innerHTML = '';
+    document.getElementById('repliesList').innerHTML = '';
+    document.querySelector('.reply-input-section').style.display = 'none';
+    bottleDetail.classList.add('show');
   }
 }
 
 function hideFishModal() {
   document.getElementById('fishModal').classList.remove('active');
   currentBottle = null;
+}
+
+function throwBackBottle() {
+  if (!currentBottle) return;
+  
+  const fishModal = document.getElementById('fishModal');
+  const bottleDetail = document.getElementById('bottleDetail');
+  
+  bottleDetail.style.animation = 'none';
+  bottleDetail.offsetHeight;
+  bottleDetail.style.animation = 'bottle-reveal 0.3s ease reverse forwards';
+  
+  setTimeout(() => {
+    fishModal.classList.remove('active');
+    bottleDetail.classList.remove('show');
+    bottleDetail.style.animation = '';
+    currentBottle = null;
+    loadStats();
+    loadBottles();
+  }, 300);
 }
 
 async function sendReply() {
@@ -480,6 +531,7 @@ function initEventListeners() {
   
   document.getElementById('fishBtn').addEventListener('click', fishBottle);
   document.getElementById('fishClose').addEventListener('click', hideFishModal);
+  document.getElementById('throwBackBtn').addEventListener('click', throwBackBottle);
   
   document.getElementById('detailClose').addEventListener('click', () => {
     document.getElementById('detailModal').classList.remove('active');
