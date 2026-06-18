@@ -1,6 +1,35 @@
 const API_BASE = '/api';
+const STORAGE_KEY = 'drift_bottle_identity';
 
 let currentBottle = null;
+let currentUser = null;
+
+const nicknameAdjectives = [
+  '迷路的', '冲浪的', '失眠的', '沉默的', '温柔的', '勇敢的', '孤独的', '快乐的',
+  '忧郁的', '神秘的', '自由的', '安静的', '浪漫的', '调皮的', '认真的', '梦幻的',
+  '漂泊的', '深沉的', '清澈的', '慵懒的', '倔强的', '明媚的', '淡然的', '执着的'
+];
+
+const nicknameNouns = [
+  '海星', '企鹅', '水母', '鲸鱼', '海豚', '海鸥', '珊瑚', '贝壳',
+  '海龟', '章鱼', '海马', '海藻', '浪花', '潮汐', '灯塔', '船帆',
+  '水手', '珍珠', '海螺', '蓝鲸', '白鲨', '飞鱼', '银鱼', '蓝鲸'
+];
+
+const avatarColors = [
+  ['#FF6B6B', '#FFE66D'],
+  ['#4ECDC4', '#45B7D1'],
+  ['#A8E6CF', '#FFD93D'],
+  ['#FF8B94', '#FFB199'],
+  ['#C56CF0', '#7873F5'],
+  ['#667EEA', '#764BA2'],
+  ['#F093FB', '#F5576C'],
+  ['#4FACFE', '#00F2FE'],
+  ['#43E97B', '#38F9D7'],
+  ['#FA709A', '#FEE140'],
+  ['#30CFD0', '#330867'],
+  ['#A1C4FD', '#C2E9FB']
+];
 
 const bottleColors = {
   blue: '#4a9eff',
@@ -9,6 +38,113 @@ const bottleColors = {
   pink: '#f472b6',
   purple: '#a78bfa'
 };
+
+function randomPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateNickname() {
+  return randomPick(nicknameAdjectives) + randomPick(nicknameNouns);
+}
+
+function generateAvatarColors() {
+  const colors = randomPick(avatarColors);
+  return JSON.stringify(colors);
+}
+
+function createAvatarSVG(colorsJson, size = 40) {
+  let colors;
+  try {
+    colors = JSON.parse(colorsJson);
+  } catch (e) {
+    colors = ['#4a9eff', '#0c1445'];
+  }
+  const initial = colors[0].replace('#', '').charAt(0).toUpperCase();
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="avatarGrad-${colors[0].replace('#', '')}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${colors[0]}"/>
+          <stop offset="100%" style="stop-color:${colors[1]}"/>
+        </linearGradient>
+      </defs>
+      <circle cx="20" cy="20" r="20" fill="url(#avatarGrad-${colors[0].replace('#', '')})"/>
+      <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <text x="20" y="26" text-anchor="middle" fill="white" font-size="18" font-weight="bold" font-family="Arial, sans-serif">${initial}</text>
+    </svg>
+  `;
+}
+
+function generateUserIdentity() {
+  return {
+    nickname: generateNickname(),
+    avatar: generateAvatarColors()
+  };
+}
+
+function saveUserIdentity(user) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+}
+
+function loadUserIdentity() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('读取用户身份失败:', e);
+  }
+  return null;
+}
+
+function getUserIdentity() {
+  if (!currentUser) {
+    currentUser = loadUserIdentity();
+    if (!currentUser) {
+      currentUser = generateUserIdentity();
+      saveUserIdentity(currentUser);
+    }
+  }
+  return currentUser;
+}
+
+function changeUserIdentity() {
+  currentUser = generateUserIdentity();
+  saveUserIdentity(currentUser);
+  renderUserIdentity();
+}
+
+function renderUserIdentity() {
+  const user = getUserIdentity();
+  const avatarEl = document.getElementById('userAvatar');
+  const nicknameEl = document.getElementById('userNickname');
+  const throwAvatarEl = document.getElementById('throwIdentityAvatar');
+  const throwNicknameEl = document.getElementById('throwIdentityNickname');
+
+  if (avatarEl) {
+    avatarEl.innerHTML = createAvatarSVG(user.avatar, 44);
+  }
+  if (nicknameEl) {
+    nicknameEl.textContent = user.nickname;
+  }
+  if (throwAvatarEl) {
+    throwAvatarEl.innerHTML = createAvatarSVG(user.avatar, 28);
+  }
+  if (throwNicknameEl) {
+    throwNicknameEl.textContent = user.nickname;
+  }
+}
+
+function createAuthorHTML(nickname, avatar) {
+  if (!nickname) return '';
+  return `
+    <div class="author-info">
+      <div class="author-avatar">${createAvatarSVG(avatar || '["#4a9eff","#0c1445"]', 28)}</div>
+      <div class="author-nickname">${escapeHtml(nickname)}</div>
+    </div>
+  `;
+}
 
 function createBottleSVG(color, size = 'normal') {
   const colorHex = bottleColors[color] || bottleColors.blue;
@@ -102,12 +238,14 @@ async function showBottleDetail(id) {
     
     document.getElementById('detailContentText').textContent = bottle.content;
     document.getElementById('detailFishedCount').textContent = bottle.fished_count;
+    document.getElementById('detailAuthor').innerHTML = createAuthorHTML(bottle.author_nickname, bottle.author_avatar);
     
     const repliesList = document.getElementById('detailRepliesList');
     if (bottle.replies && bottle.replies.length > 0) {
       repliesList.innerHTML = bottle.replies.map(r => `
         <div class="reply-item">
-          ${escapeHtml(r.content)}
+          ${createAuthorHTML(r.author_nickname, r.author_avatar)}
+          <div class="reply-content">${escapeHtml(r.content)}</div>
           <div class="reply-time">${formatTime(r.created_at)}</div>
         </div>
       `).join('');
@@ -123,6 +261,7 @@ async function showBottleDetail(id) {
 }
 
 function showThrowModal() {
+  renderUserIdentity();
   document.getElementById('throwModal').classList.add('active');
   document.getElementById('throwContent').value = '';
   document.getElementById('throwCharCount').textContent = '0';
@@ -136,6 +275,7 @@ async function throwBottle() {
   const content = document.getElementById('throwContent').value.trim();
   const colorRadio = document.querySelector('input[name="bottleColor"]:checked');
   const color = colorRadio ? colorRadio.value : 'blue';
+  const user = getUserIdentity();
   
   if (!content) {
     alert('请输入内容');
@@ -153,7 +293,12 @@ async function throwBottle() {
     const res = await fetch(`${API_BASE}/throw`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, color })
+      body: JSON.stringify({ 
+        content, 
+        color,
+        authorNickname: user.nickname,
+        authorAvatar: user.avatar
+      })
     });
     
     if (res.ok) {
@@ -212,10 +357,12 @@ async function fishBottle() {
     setTimeout(() => {
       if (!bottle) {
         document.getElementById('bottleContentText').textContent = '很遗憾，今天没有捞到瓶子...';
+        document.getElementById('bottleAuthor').innerHTML = '';
         document.getElementById('repliesList').innerHTML = '';
         document.querySelector('.reply-input-section').style.display = 'none';
       } else {
         document.getElementById('bottleContentText').textContent = bottle.content;
+        document.getElementById('bottleAuthor').innerHTML = createAuthorHTML(bottle.author_nickname, bottle.author_avatar);
         document.querySelector('.reply-input-section').style.display = 'block';
         document.getElementById('replyContent').value = '';
         document.getElementById('replyCharCount').textContent = '0';
@@ -223,7 +370,8 @@ async function fishBottle() {
         if (bottle.replies && bottle.replies.length > 0) {
           document.getElementById('repliesList').innerHTML = bottle.replies.map(r => `
             <div class="reply-item">
-              ${escapeHtml(r.content)}
+              ${createAuthorHTML(r.author_nickname, r.author_avatar)}
+              <div class="reply-content">${escapeHtml(r.content)}</div>
               <div class="reply-time">${formatTime(r.created_at)}</div>
             </div>
           `).join('');
@@ -255,6 +403,7 @@ async function sendReply() {
   if (!currentBottle) return;
   
   const content = document.getElementById('replyContent').value.trim();
+  const user = getUserIdentity();
   
   if (!content) {
     alert('请输入回信内容');
@@ -269,7 +418,12 @@ async function sendReply() {
     const res = await fetch(`${API_BASE}/reply`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bottleId: currentBottle.id, content })
+      body: JSON.stringify({ 
+        bottleId: currentBottle.id, 
+        content,
+        authorNickname: user.nickname,
+        authorAvatar: user.avatar
+      })
     });
     
     if (res.ok) {
@@ -283,7 +437,8 @@ async function sendReply() {
       const replyEl = document.createElement('div');
       replyEl.className = 'reply-item';
       replyEl.innerHTML = `
-        ${escapeHtml(reply.content)}
+        ${createAuthorHTML(reply.author_nickname, reply.author_avatar)}
+        <div class="reply-content">${escapeHtml(reply.content)}</div>
         <div class="reply-time">${formatTime(reply.created_at)}</div>
       `;
       repliesList.appendChild(replyEl);
@@ -332,6 +487,8 @@ function initEventListeners() {
   
   document.getElementById('replyBtn').addEventListener('click', sendReply);
   
+  document.getElementById('changeIdentityBtn').addEventListener('click', changeUserIdentity);
+  
   document.getElementById('throwContent').addEventListener('input', (e) => {
     document.getElementById('throwCharCount').textContent = e.target.value.length;
   });
@@ -356,6 +513,8 @@ function initEventListeners() {
 }
 
 function init() {
+  getUserIdentity();
+  renderUserIdentity();
   initEventListeners();
   loadStats();
   loadBottles();

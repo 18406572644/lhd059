@@ -120,6 +120,151 @@ body {
   letter-spacing: 4px;
 }
 
+.user-identity {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 10px 15px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-nickname {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Source Serif 4', serif;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.btn-change-identity {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Source Serif 4', serif;
+}
+
+.btn-change-identity:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn-change-identity svg {
+  width: 12px;
+  height: 12px;
+}
+
+.current-identity {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 12px 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.current-identity-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+}
+
+.current-identity-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-identity-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.current-identity-nickname {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.bottle-author {
+  margin-bottom: 12px;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.author-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+}
+
+.author-nickname {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Source Serif 4', serif;
+}
+
+.reply-item .author-info {
+  margin-bottom: 4px;
+}
+
+.reply-item .author-avatar {
+  width: 24px;
+  height: 24px;
+}
+
+.reply-item .author-nickname {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.reply-content {
+  color: white;
+  line-height: 1.5;
+}
+
 .bottles-container {
   position: fixed;
   top: 0;

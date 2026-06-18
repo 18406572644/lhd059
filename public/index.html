@@ -43,6 +43,21 @@
     </div>
   </div>
 
+  <div class="user-identity" id="userIdentity">
+    <div class="user-avatar" id="userAvatar"></div>
+    <div class="user-info">
+      <div class="user-nickname" id="userNickname"></div>
+      <button class="btn-change-identity" id="changeIdentityBtn" title="换一个身份">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6"/>
+          <path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        换一个身份
+      </button>
+    </div>
+  </div>
+
   <h1 class="title">匿名漂流瓶</h1>
 
   <div class="bottles-container" id="bottlesContainer"></div>
@@ -67,6 +82,13 @@
   <div class="modal" id="throwModal">
     <div class="modal-content glass-effect">
       <h2 class="modal-title">扔一个漂流瓶</h2>
+      <div class="current-identity">
+        <div class="current-identity-label">你的身份：</div>
+        <div class="current-identity-info">
+          <div class="current-identity-avatar" id="throwIdentityAvatar"></div>
+          <div class="current-identity-nickname" id="throwIdentityNickname"></div>
+        </div>
+      </div>
       <textarea class="bottle-input" id="throwContent" placeholder="写下你的心里话，让它漂向远方..." maxlength="140"></textarea>
       <div class="char-count"><span id="throwCharCount">0</span>/140</div>
       
@@ -113,6 +135,7 @@
       </div>
       <div class="bottle-detail-content" id="bottleDetail">
         <h2 class="modal-title">捞到一个漂流瓶</h2>
+        <div class="bottle-author" id="bottleAuthor"></div>
         <div class="bottle-content" id="bottleContentText"></div>
         <div class="replies-section">
           <h3 class="replies-title">回信</h3>
@@ -134,6 +157,7 @@
     <div class="modal-content glass-effect bottle-detail book-flip">
       <div class="bottle-detail-content">
         <h2 class="modal-title">漂流瓶详情</h2>
+        <div class="bottle-author" id="detailAuthor"></div>
         <div class="bottle-content" id="detailContentText"></div>
         <div class="replies-section">
           <h3 class="replies-title">所有回信</h3>

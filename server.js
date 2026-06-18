@@ -16,6 +16,8 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     content TEXT NOT NULL,
     color TEXT NOT NULL DEFAULT 'blue',
+    author_nickname TEXT,
+    author_avatar TEXT,
     created_at TEXT NOT NULL,
     fished_count INTEGER NOT NULL DEFAULT 0,
     is_sunk INTEGER NOT NULL DEFAULT 0
@@ -25,6 +27,8 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bottle_id INTEGER NOT NULL,
     content TEXT NOT NULL,
+    author_nickname TEXT,
+    author_avatar TEXT,
     created_at TEXT NOT NULL,
     FOREIGN KEY (bottle_id) REFERENCES bottles(id)
   );
@@ -35,6 +39,24 @@ db.exec(`
     fished_count INTEGER NOT NULL DEFAULT 0
   );
 `);
+
+const pragma = db.prepare("PRAGMA table_info(bottles)").all();
+const bottleColumns = pragma.map(c => c.name);
+if (!bottleColumns.includes('author_nickname')) {
+  db.exec("ALTER TABLE bottles ADD COLUMN author_nickname TEXT");
+}
+if (!bottleColumns.includes('author_avatar')) {
+  db.exec("ALTER TABLE bottles ADD COLUMN author_avatar TEXT");
+}
+
+const replyPragma = db.prepare("PRAGMA table_info(replies)").all();
+const replyColumns = replyPragma.map(c => c.name);
+if (!replyColumns.includes('author_nickname')) {
+  db.exec("ALTER TABLE replies ADD COLUMN author_nickname TEXT");
+}
+if (!replyColumns.includes('author_avatar')) {
+  db.exec("ALTER TABLE replies ADD COLUMN author_avatar TEXT");
+}
 
 function getTodayStr() {
   const now = new Date();
@@ -63,7 +85,7 @@ function incrementDailyStat(type) {
 }
 
 app.post('/api/throw', (req, res) => {
-  const { content, color } = req.body;
+  const { content, color, authorNickname, authorAvatar } = req.body;
 
   if (!content || content.trim().length === 0) {
     return res.status(400).json({ error: '内容不能为空' });
@@ -76,8 +98,8 @@ app.post('/api/throw', (req, res) => {
   const bottleColor = colors.includes(color) ? color : 'blue';
 
   const now = new Date().toISOString();
-  const stmt = db.prepare('INSERT INTO bottles (content, color, created_at) VALUES (?, ?, ?)');
-  const result = stmt.run(content.trim(), bottleColor, now);
+  const stmt = db.prepare('INSERT INTO bottles (content, color, author_nickname, author_avatar, created_at) VALUES (?, ?, ?, ?, ?)');
+  const result = stmt.run(content.trim(), bottleColor, authorNickname || null, authorAvatar || null, now);
 
   incrementDailyStat('thrown');
 
@@ -85,6 +107,8 @@ app.post('/api/throw', (req, res) => {
     id: result.lastInsertRowid,
     content: content.trim(),
     color: bottleColor,
+    author_nickname: authorNickname || null,
+    author_avatar: authorAvatar || null,
     created_at: now
   });
 });
@@ -116,19 +140,23 @@ app.get('/api/fish', (req, res) => {
     id: updatedBottle.id,
     content: updatedBottle.content,
     color: updatedBottle.color,
+    author_nickname: updatedBottle.author_nickname,
+    author_avatar: updatedBottle.author_avatar,
     created_at: updatedBottle.created_at,
     fished_count: updatedBottle.fished_count,
     is_sunk: updatedBottle.is_sunk === 1,
     replies: replies.map(r => ({
       id: r.id,
       content: r.content,
+      author_nickname: r.author_nickname,
+      author_avatar: r.author_avatar,
       created_at: r.created_at
     }))
   });
 });
 
 app.post('/api/reply', (req, res) => {
-  const { bottleId, content } = req.body;
+  const { bottleId, content, authorNickname, authorAvatar } = req.body;
 
   if (!bottleId || !content || content.trim().length === 0) {
     return res.status(400).json({ error: '参数错误' });
@@ -143,13 +171,15 @@ app.post('/api/reply', (req, res) => {
   }
 
   const now = new Date().toISOString();
-  const stmt = db.prepare('INSERT INTO replies (bottle_id, content, created_at) VALUES (?, ?, ?)');
-  const result = stmt.run(bottleId, content.trim(), now);
+  const stmt = db.prepare('INSERT INTO replies (bottle_id, content, author_nickname, author_avatar, created_at) VALUES (?, ?, ?, ?, ?)');
+  const result = stmt.run(bottleId, content.trim(), authorNickname || null, authorAvatar || null, now);
 
   res.json({
     id: result.lastInsertRowid,
     bottle_id: bottleId,
     content: content.trim(),
+    author_nickname: authorNickname || null,
+    author_avatar: authorAvatar || null,
     created_at: now
   });
 });
@@ -181,12 +211,16 @@ app.get('/api/bottle/:id', (req, res) => {
     id: bottle.id,
     content: bottle.content,
     color: bottle.color,
+    author_nickname: bottle.author_nickname,
+    author_avatar: bottle.author_avatar,
     created_at: bottle.created_at,
     fished_count: bottle.fished_count,
     is_sunk: bottle.is_sunk === 1,
     replies: replies.map(r => ({
       id: r.id,
       content: r.content,
+      author_nickname: r.author_nickname,
+      author_avatar: r.author_avatar,
       created_at: r.created_at
     }))
   });
